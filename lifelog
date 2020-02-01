@@ -1,0 +1,73 @@
+#!/bin/sh
+
+# Get current user home
+home=$(echo $(getent passwd $USER) | cut -d : -f 6)
+
+mkdir -p "$home/.lifelog"
+
+help='usage: lifelog [-p log_path] [-n log_name] [-d date_standard | -f date_format] [-t tags] log_text'
+
+# Defaults
+log_path="$home/.lifelog"
+log_name="main"
+date_standard="RFC3339"
+date_format=""
+tags=""
+
+# Config from file
+#if [ -f "$home/.lifelog/config" ]
+#then
+	#TODO path
+	#TODO name
+	#TODO date_standard
+	#TODO date_format
+#else
+	#TODO write default config
+#fi
+
+# Get options
+while getopts hp:n:d:f:t: o
+do
+	case "$o" in
+	h)
+		echo "$help"
+		exit 0
+		;;
+	p) log_path="$OPTARG";;
+	n) log_name="$OPTARG";;
+	d) date_standard="$OPTARG";;
+	f) date_format="$OPTARG";;
+	t) tags="$OPTARG";;
+	[?])
+		echo "$help"
+		exit 1
+		;;
+	esac
+done
+shift $OPTIND-1
+
+log_text="$@"
+if [ -z "$log_text" ]
+then
+	echo "Missing log text"
+	echo "$help"
+	exit 1
+fi
+
+if [ -z "$date_format" ]
+then
+	case "$date_standard" in
+	RFC3339) date_format="%Y-%m-%dT%H:%M:%S%z";;
+	#TODO more date standards
+	esac
+fi
+
+if [ -z "$date_format" ]
+then
+	echo "Unknown date standard: $date_standard"
+	echo "$help"
+	exit 1
+fi
+
+echo -e "$(date +%s)\t$(date "+$date_format")\t$tags\t$log_text" >> "$log_path/$log_name.txt"
+
