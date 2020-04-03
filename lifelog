@@ -3,27 +3,36 @@
 # Get current user home
 home=$(echo $(getent passwd $USER) | cut -d : -f 6)
 
-mkdir -p "$home/.lifelog"
+if [ -z "$XDG_DATA_HOME" ]
+then
+	data_path="$home/.local/share/lifelog"
+else
+	data_path="$XDG_DATA_HOME/lifelog"
+fi
 
-help='usage: lifelog [-p log_path] [-n log_name] [-d date_standard | -f date_format] [-t tags] log_text'
+if [ -z "$XDG_CONFIG_HOME" ]
+then
+	config_path="$home/.config/lifelog"
+else
+	config_path="$XDG_CONFIG_HOME/lifelog"
+fi
+
+help='usage: lifelog [-p data_path] [-n log_name] [-d date_standard | -f date_format] [-t tags] log_text'
 
 # Defaults
-log_path="$home/.lifelog"
 log_name="main"
 date_standard="RFC3339"
 date_format=""
 tags=""
 
 # Config from file
-#if [ -f "$home/.lifelog/config" ]
+#if [ -f "$config_path/config" ]
 #then
-	#TODO path
-	#TODO name
-	#TODO date_standard
-	#TODO date_format
-#else
-	#TODO write default config
+#	. "$config_path/config"
 #fi
+
+# Create data directory
+mkdir -p "$data_path"
 
 # Get options
 while getopts hp:n:d:f:t: o
@@ -69,5 +78,5 @@ then
 	exit 1
 fi
 
-echo -e "$(date +%s)\t$(date "+$date_format")\t$tags\t$log_text" >> "$log_path/$log_name.txt"
+echo -e "$(date +%s)\t$(date "+$date_format")\t$tags\t$log_text" >> "$data_path/$log_name.txt"
 
